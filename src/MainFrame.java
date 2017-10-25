@@ -1,32 +1,34 @@
 import sun.applet.Main;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class MainFrame extends JFrame {
+
+    private FTPManager ftpManager;
 
     private BorderLayout bl;
     private JPanel inputPanel;
     private JTextField hostField;
     private JTextField idField;
     private JPasswordField pwField;
+    private JTextField portField;
     private JButton connectBtn;
 
-    private JList<String> directoryList;
-    private DirectoryItem directoryItems[] = {
-            new DirectoryItem("abc.txt"),
-            new DirectoryItem("bddd.txt"),
-            new DirectoryItem("secse"),
-            new DirectoryItem("awgdeg")
-    };
-//    private String[] directories = {"test", "test1", "test2", "test3", "test4"};
+    private JList<DirectoryItem> serverDirectoryList;
+    private JList<DirectoryItem> clientDirectoryList;
 
     private JTextArea msgField;
     private String msgs = "";
 
     public MainFrame(){
 
-        Dimension mainSize = new Dimension(1000, 600);
+        Dimension mainSize = new Dimension(1000, 800);
         this.setSize(mainSize);
 
 
@@ -40,14 +42,27 @@ public class MainFrame extends JFrame {
             inputPanel = new JPanel();
             inputPanel.setSize(mainSize.width, (int)Math.max(mainSize.getHeight()*0.05, 30));
 
-            hostField = new JTextField();
+            hostField = new JTextField("ldayou.asuscomm.com");
             hostField.setPreferredSize(new Dimension(300, inputPanel.getSize().height));
-            idField = new JTextField();
+            idField = new JTextField("pi");
             idField.setPreferredSize(new Dimension(100, inputPanel.getSize().height));
             pwField = new JPasswordField();
             pwField.setPreferredSize(new Dimension(100, inputPanel.getSize().height));
+            portField = new JTextField("50021");
+            portField.setPreferredSize(new Dimension(100, inputPanel.getSize().height));
             connectBtn = new JButton("Connect");
             connectBtn.setPreferredSize(new Dimension(100, inputPanel.getSize().height));
+            connectBtn.addActionListener(new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ftpManager.connectFTPServer(
+                            hostField.getText().toString(),
+                            idField.getText().toString(),
+                            new String(pwField.getPassword()),
+                            portField.getText().toString()
+                            );
+                }
+            });
 
             inputPanel.add(new JLabel("Host:"));
             inputPanel.add(hostField);
@@ -55,6 +70,8 @@ public class MainFrame extends JFrame {
             inputPanel.add(idField);
             inputPanel.add(new JLabel("PW:"));
             inputPanel.add(pwField);
+            inputPanel.add(new JLabel("Port Number:"));
+            inputPanel.add(portField);
             inputPanel.add(connectBtn);
 
             this.add(inputPanel, BorderLayout.NORTH);
@@ -62,45 +79,94 @@ public class MainFrame extends JFrame {
 
         {
             Dimension listSize = new Dimension(mainSize.width, (int)Math.max(mainSize.height*0.7, 200));
-            directoryList = new JList(directoryItems);
-            directoryList.setPreferredSize(listSize);
-            directoryList.setCellRenderer(new DirectoryCellRenderer());
-            directoryList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+            JPanel directoryPanel = new JPanel();
+            directoryPanel.setLayout(new BorderLayout());
+
+            // server directory
+            serverDirectoryList = new JList<DirectoryItem>();
+            serverDirectoryList.setCellRenderer(new DirectoryCellRenderer());
+            serverDirectoryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            serverDirectoryList.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    JList list = (JList)e.getSource();
+                    if (e.getClickCount() == 2) {
+
+                        // Double-click detected
+                        int index = list.locationToIndex(e.getPoint());
+                        ftpManager.selectListItem(index);
+//                        ftpManager.addTextToMsgField(ftpManager.getDirectoryItems()[index].getTitle());
+
+                    }
+                }
+            });
 
             JScrollPane scrollPane = new JScrollPane();
-            scrollPane.setPreferredSize(listSize);
-            scrollPane.setViewportView(directoryList);
+            scrollPane.setPreferredSize(new Dimension(listSize.width/2, listSize.height));
+            scrollPane.setViewportView(serverDirectoryList);
 
-            this.add(scrollPane, BorderLayout.CENTER);
+            directoryPanel.add(scrollPane, BorderLayout.EAST);
+
+
+            // client directory
+            clientDirectoryList = new JList<DirectoryItem>();
+            clientDirectoryList.setCellRenderer(new DirectoryCellRenderer());
+            clientDirectoryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            clientDirectoryList.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    JList list = (JList)e.getSource();
+                    if (e.getClickCount() == 2) {
+                        // Double-click detected
+                        int index = list.locationToIndex(e.getPoint());
+
+
+                    }
+                }
+            });
+
+            JScrollPane scrollPane2 = new JScrollPane();
+            scrollPane2.setPreferredSize(new Dimension(listSize.width/2, listSize.height));
+            scrollPane2.setViewportView(clientDirectoryList);
+
+            directoryPanel.add(scrollPane2, BorderLayout.WEST);
+
+
+            this.add(directoryPanel, BorderLayout.CENTER);
         }
 
         {
             msgField = new JTextArea();
-            msgField.setPreferredSize(new Dimension(mainSize.width, (int)Math.max(mainSize.height*0.25, 100)));
 
-            JScrollPane scroll = new JScrollPane (msgField);
+            JScrollPane scroll = new JScrollPane ();
+            scroll.setPreferredSize(new Dimension(mainSize.width, (int)Math.max(mainSize.height*0.25, 100)));
+            scroll.setViewportView(msgField);
+
             this.add(scroll, BorderLayout.SOUTH);
         }
 
         //프레임 보이기
         this.setVisible(true);
 
-        new Thread(){
-            @Override
-            public void run(){
-                int count = 0;
-                while(true) {
-                    try {
-                        Thread.sleep(500);
-                        msgField.insert(count + "\n", 0);
-                        count += 1;
-//                    msgField.setText(msgs);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
+        ftpManager = new FTPManager(serverDirectoryList, clientDirectoryList, msgField);
+
+//        new Thread(){
+//            @Override
+//            public void run(){
+//                int count = 0;
+//                while(true) {
+//                    try {
+//                        Thread.sleep(500);
+//                        msgField.insert(count + "\n", 0);
+//                        count += 1;
+////                    msgField.setText(msgs);
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        }.start();
 
     }
 
