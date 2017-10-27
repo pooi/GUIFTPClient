@@ -96,7 +96,7 @@ public class DirectoryItem{
 
     public DirectoryItem(String content, String dirType){
         this(content);
-        if(dirType.startsWith("d")){
+        if(dirType.startsWith("d") || dirType.contains("<DIR>")){
             this.type = TYPE_FOLDER;
         }
     }

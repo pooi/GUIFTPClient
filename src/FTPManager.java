@@ -69,8 +69,9 @@ public class FTPManager {
 
                     // Initialize
                     try {
-                        ftpIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                        printWriter = new PrintWriter(socket.getOutputStream());
+                        ftpIn = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
+//                        printWriter = new PrintWriter(socket.getOutputStream());
+                        printWriter = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"));
 //                        socket.setSoTimeout(3000);
 //                        send("OPEN " + host + " " + portNumber);
 //                        handleMultiLineResponse();
@@ -101,11 +102,15 @@ public class FTPManager {
 
     private void loginToServer(String id, String pw) {
 
+        if (id == null || "".equals(id)) {
+            id = "anonymous";
+        }
+
         String userName = "USER " + id;
         send(userName);
         String resultCode = handleMultiLineResponse();
 
-        if(resultCode.startsWith("331 ")) {
+        if (resultCode.startsWith("331 ")) {
             String userPassword = "PASS " + pw;//removeNewLine(new String(cmdString, "UTF-8"));
             send(userPassword, true);
             resultCode = handleMultiLineResponse();
@@ -115,6 +120,9 @@ public class FTPManager {
 //         resultCode = handleMultiLineResponse();
 
         if (resultCode.startsWith("230")) {
+            send("SYST");
+            String os = handleMultiLineResponse();
+
             getDirectoryList();
         } else {
 
@@ -153,19 +161,29 @@ public class FTPManager {
                                 }
                             }
 
-                            send("LIST");
+//                            send("SYST");
+//                            String os = handleMultiLineResponse();
+//                            System.out.println(os);
+
+//                            send("LIST");
+                            send("NLST");
                             handleResponse();
 
-                            BufferedReader dataIn = new BufferedReader(new InputStreamReader(dataConnection.getInputStream()));
+
+                            BufferedReader dataIn = new BufferedReader(new InputStreamReader(dataConnection.getInputStream(), "utf-8"));
                             ArrayList<DirectoryItem> list = new ArrayList<>();
                             String line;
                             while ((line = dataIn.readLine()) != null) {
-//                                System.out.println(line);
-                                String[] strs = line.split(" ");
-//                                System.out.println(strs[strs.length-1]);
 
-                                list.add(new DirectoryItem(strs[strs.length - 1], strs[0]));
+//                                String[] strs = line.split(" ");
+
+//                                list.add(new DirectoryItem(strs[strs.length - 1], strs[0]));
+
+                                list.add(new DirectoryItem(line));
+
+
                             }
+
                             dataConnection.close();
                             dataIn.close();
 
@@ -227,14 +245,20 @@ public class FTPManager {
             if (!socket.isClosed() && socket.isConnected()) {
                 send("CWD " + directory);
                 String response = ftpIn.readLine();
-                if (response.startsWith("530 ")) {
-                    addTextToMsgField("<-- Supplied command not expected at this time.");
-                    return;
-                } else if(response.startsWith("550 ")){
+//                if (response.startsWith("530 ")) {
+//                    addTextToMsgField("<-- Supplied command not expected at this time.");
+//                    return;
+//                } else if(response.startsWith("250 ")) {
+//                    addTextToMsgField("<-- " + response);
+//                } else {// if(response.startsWith("550 ") || response.startsWith("451 ")){
+//                    addTextToMsgField("<-- " + response);
+//                    return;
+//                }
+                if (response.startsWith("250 ")) {
+                    addTextToMsgField("<-- " + response);
+                } else {// if(response.startsWith("550 ") || response.startsWith("451 ")){
                     addTextToMsgField("<-- " + response);
                     return;
-                } else {
-                    addTextToMsgField("<-- " + response);
                 }
 
                 getDirectoryList();
@@ -306,10 +330,8 @@ public class FTPManager {
                     byte readIn[] = new byte[size];
                     int read;
                     int offset = 0;
-                    addTextToMsgField("");
                     while ((read = dataIn.read(readIn, offset, readIn.length - offset)) != -1) {
                         offset += read;
-                        msgField.insert("<-- Download : " + offset / size * 100 + "%", 0);
                         if (readIn.length - offset == 0) {
                             break;
                         }

@@ -150,6 +150,7 @@ public class MainFrame extends JFrame {
         this.setVisible(true);
 
         ftpManager = new FTPManager(serverDirectoryList, clientDirectoryList, msgField);
+        new ClientDirectoryList("./", clientDirectoryList);
 
 //        new Thread(){
 //            @Override
