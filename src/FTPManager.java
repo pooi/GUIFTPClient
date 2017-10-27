@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,14 +11,18 @@ public class FTPManager {
     private JTextArea msgField;
     private JList<DirectoryItem> serverDirectoryList;
     private DirectoryItem[] serverDirectoryItems;
+
+    //client
     private JList<DirectoryItem> clientDirectoryList;
     private DirectoryItem[] clientDirectoryItems;
+    private String clientDirPath;
 
     private Socket socket = new Socket();
     private BufferedReader ftpIn;
     private PrintWriter printWriter;
 
-    public FTPManager(JList<DirectoryItem> serverDirectoryList, JList<DirectoryItem> clientDirectoryList) {
+    public FTPManager(JList<DirectoryItem> serverDirectoryList, JList<DirectoryItem> clientDirectoryList, String initPath) {
+        this.clientDirPath = initPath;
         this.serverDirectoryList = serverDirectoryList;
         this.serverDirectoryItems = new DirectoryItem[0];
         this.clientDirectoryList = clientDirectoryList;
@@ -25,8 +30,8 @@ public class FTPManager {
         getClientDirectoryList();
     }
 
-    public FTPManager(JList<DirectoryItem> serverDirectoryList, JList<DirectoryItem> clientDirectoryList, JTextArea field) {
-        this(serverDirectoryList, clientDirectoryList);
+    public FTPManager(JList<DirectoryItem> serverDirectoryList, JList<DirectoryItem> clientDirectoryList, String initPath, JTextArea field) {
+        this(serverDirectoryList, clientDirectoryList, initPath);
         this.msgField = field;
     }
 
@@ -34,10 +39,6 @@ public class FTPManager {
         if (msgField != null) {
             msgField.insert(text + "\n", 0);
         }
-    }
-
-    private void getClientDirectoryList() {
-
     }
 
     public void connectFTPServer(String host, String id, String pw, String port) {
@@ -123,14 +124,14 @@ public class FTPManager {
             send("SYST");
             String os = handleMultiLineResponse();
 
-            getDirectoryList();
+            getServerDirectoryList();
         } else {
 
         }
 
     }
 
-    private void getDirectoryList() {
+    private void getServerDirectoryList() {
         new Thread() {
             @Override
             public void run() {
@@ -261,7 +262,7 @@ public class FTPManager {
                     return;
                 }
 
-                getDirectoryList();
+                getServerDirectoryList();
             } else {
                 addTextToMsgField("Supplied command not expected at this time.");
             }
@@ -270,6 +271,64 @@ public class FTPManager {
             addTextToMsgField("Supplied command not expected at this time.");
         }
 
+    }
+
+    private void getClientDirectoryList() {
+        new Thread() {
+            @Override
+            public void run() {
+                File dir = new File(clientDirPath);
+                File[] fileList = dir.listFiles();
+                try{
+                    ArrayList<DirectoryItem> list = new ArrayList<>();
+                    for(int i=0; i<fileList.length; i++) {
+                        File file = fileList[i];
+                        String fileName = file.getName();
+                        DirectoryItem Item = file.isDirectory() ? new DirectoryItem(fileName, "d") : new DirectoryItem(fileName);
+
+                        list.add(Item);
+                    }
+                    clientDirectoryItems = changeArrayListToStrings(list);
+                    clientDirectoryList.setListData(clientDirectoryItems);
+                } catch (Exception e) {
+
+                }
+            }
+        }.start();
+    }
+
+    private void enterClientDirectory(String directory) {
+        String[] path = this.clientDirPath.split("/");
+
+        if (directory == "../") {
+            if (path.length <= 2) {
+                this.clientDirPath = path[0] + "/";
+            } else {
+                path = Arrays.copyOf(path, path.length-1);
+                this.clientDirPath = String.join("/", path);
+            }
+        } else {
+            this.clientDirPath += path.length > 1 ? "/" + directory : directory;
+        }
+//        System.out.println(directory + " " + clientDirPath);
+        getClientDirectoryList();
+    }
+
+    public void selectClientListItem(int index) {
+        new Thread() {
+            @Override
+            public void run() {
+                DirectoryItem item = clientDirectoryItems[index];
+
+                if (DirectoryItem.TYPE_FOLDER.equals(item.getType())) {
+                    enterClientDirectory(item.getTitle());
+                } else {
+//                    System.out.println("click! " + item.getTitle());
+                    uploadFile(item.getTitle());
+                }
+
+            }
+        }.start();
     }
 
     private void downloadFile(String pathName) {
@@ -340,7 +399,7 @@ public class FTPManager {
                     //dataIn.read(readIn, 0, size);
 
                     try {
-                        File file = new File(pathName);
+                        File file = new File(clientDirPath + "/" + pathName);
                         FileOutputStream fos = new FileOutputStream(file);
                         fos.write(readIn);
                         fos.close();
@@ -351,6 +410,8 @@ public class FTPManager {
                     dataConnection.close();
                     dataIn.close();
                     handleMultiLineResponse();
+
+                    getClientDirectoryList();
 
                 } catch (IOException io) {
                     addTextToMsgField("Data transfer connection I/O error, closing data connection.");
@@ -364,6 +425,74 @@ public class FTPManager {
             }
 
         } catch (Exception e) {
+            addTextToMsgField("Supplied command not expected at this time.");
+        }
+
+    }
+
+    private void uploadFile(String fileName){
+
+        try {
+            File file = new File(fileName);
+            Socket dataConnection = new Socket();
+            String Ip = "";
+            int portNum = 0;
+            try {
+                FileInputStream fileIn = new FileInputStream(file);
+                int fileSize = (int) file.length();
+                byte content[] = new byte[fileSize];
+                fileIn.read(content, 0, fileSize);
+
+                send("TYPE I");
+                String response = ftpIn.readLine();
+                if (response.startsWith("530 ")) {
+                    addTextToMsgField("<-- Supplied command not expected at this time.");
+                    return;
+                } else
+                    addTextToMsgField("<-- " + response);
+
+
+                send("PASV");
+                String result = printAndReturnLastResponse();
+
+                String[] results = result.split("\\(");
+                Ip = getIp(results[1]);
+                portNum = getPortNum(results[1]);
+
+                dataConnection = new Socket(Ip, portNum);
+                if (ftpIn.ready()) {
+                    String code = ftpIn.readLine();
+                    if (code.startsWith("425 ")) {
+                        addTextToMsgField("<-- Data transfer connection to " + Ip + " on port " + portNum + " failed to open.");
+                        return;
+                    }
+                }
+
+                BufferedOutputStream dataOut = new BufferedOutputStream(dataConnection.getOutputStream());
+
+                send("STOR " + fileName);
+                handleMultiLineResponse();
+
+                dataOut.write(content, 0, fileSize);
+                dataOut.flush();
+
+                fileIn.close();
+                dataOut.close();
+                dataConnection.close();
+
+                handleMultiLineResponse();
+                
+                getServerDirectoryList();
+
+            } catch (FileNotFoundException e) {
+                addTextToMsgField("Access to local file " + fileName + " denied.");
+            } catch (IOException io) {
+                addTextToMsgField("835 Data transfer connection I/O error, closing data connection.");
+                dataConnection.close();
+            } catch (IllegalArgumentException i) {
+                addTextToMsgField("Data transfer connection to " + Ip + " on port " + portNum + " failed to open.");
+            }
+        }catch (Exception e){
             addTextToMsgField("Supplied command not expected at this time.");
         }
 

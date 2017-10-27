@@ -42,13 +42,13 @@ public class MainFrame extends JFrame {
             inputPanel = new JPanel();
             inputPanel.setSize(mainSize.width, (int)Math.max(mainSize.getHeight()*0.05, 30));
 
-            hostField = new JTextField("ldayou.asuscomm.com");
+            hostField = new JTextField("speedtest.tele2.net");
             hostField.setPreferredSize(new Dimension(300, inputPanel.getSize().height));
-            idField = new JTextField("pi");
+            idField = new JTextField();
             idField.setPreferredSize(new Dimension(100, inputPanel.getSize().height));
             pwField = new JPasswordField();
             pwField.setPreferredSize(new Dimension(100, inputPanel.getSize().height));
-            portField = new JTextField("50021");
+            portField = new JTextField();
             portField.setPreferredSize(new Dimension(100, inputPanel.getSize().height));
             connectBtn = new JButton("Connect");
             connectBtn.setPreferredSize(new Dimension(100, inputPanel.getSize().height));
@@ -120,7 +120,7 @@ public class MainFrame extends JFrame {
                     if (e.getClickCount() == 2) {
                         // Double-click detected
                         int index = list.locationToIndex(e.getPoint());
-
+                        ftpManager.selectClientListItem(index);
 
                     }
                 }
@@ -149,8 +149,8 @@ public class MainFrame extends JFrame {
         //프레임 보이기
         this.setVisible(true);
 
-        ftpManager = new FTPManager(serverDirectoryList, clientDirectoryList, msgField);
-        new ClientDirectoryList("./", clientDirectoryList);
+        ftpManager = new FTPManager(serverDirectoryList, clientDirectoryList, "./", msgField);
+//        new ClientDirectoryList("./", clientDirectoryList);
 
 //        new Thread(){
 //            @Override
