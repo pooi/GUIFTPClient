@@ -23,7 +23,7 @@ public class MainFrame extends JFrame {
     private JList<DirectoryItem> serverDirectoryList;
     private JList<DirectoryItem> clientDirectoryList;
 
-    private JTextArea msgField;
+    private JTextPane msgField;
     private String msgs = "";
 
     public MainFrame(){
@@ -95,7 +95,7 @@ public class MainFrame extends JFrame {
 
                         // Double-click detected
                         int index = list.locationToIndex(e.getPoint());
-                        ftpManager.selectListItem(index);
+                        ftpManager.selectServerListItem(index);
 //                        ftpManager.addTextToMsgField(ftpManager.getDirectoryItems()[index].getTitle());
 
                     }
@@ -137,7 +137,7 @@ public class MainFrame extends JFrame {
         }
 
         {
-            msgField = new JTextArea();
+            msgField = new JTextPane();
 
             JScrollPane scroll = new JScrollPane ();
             scroll.setPreferredSize(new Dimension(mainSize.width, (int)Math.max(mainSize.height*0.25, 100)));
@@ -150,24 +150,6 @@ public class MainFrame extends JFrame {
         this.setVisible(true);
 
         ftpManager = new FTPManager(serverDirectoryList, clientDirectoryList, "./", msgField);
-//        new ClientDirectoryList("./", clientDirectoryList);
-
-//        new Thread(){
-//            @Override
-//            public void run(){
-//                int count = 0;
-//                while(true) {
-//                    try {
-//                        Thread.sleep(500);
-//                        msgField.insert(count + "\n", 0);
-//                        count += 1;
-////                    msgField.setText(msgs);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        }.start();
 
     }
 
