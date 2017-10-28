@@ -383,19 +383,13 @@ public class FTPManager {
     * return : void
      */
     private void enterClientDirectory(String directory) {
-        String[] path = this.clientDirPath.split("/");
-
-        if (directory == "../") {
-            if (path.length <= 2) {
-                this.clientDirPath = path[0] + "/";
-            } else {
-                path = Arrays.copyOf(path, path.length-1);
-                this.clientDirPath = String.join("/", path);
-            }
-        } else {
-            this.clientDirPath += path.length > 1 ? "/" + directory : directory;
+        try {
+            File newPath = new File(this.clientDirPath + "/" + directory);
+            this.clientDirPath = newPath.getCanonicalPath();
+            System.out.println(this.clientDirPath + directory + " " + this.clientDirPath);
+        } catch (Exception e) {
+            
         }
-//        System.out.println(directory + " " + clientDirPath);
         getClientDirectoryList();
     }
 

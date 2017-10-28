@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.*;
 
 public class MainFrame extends JFrame {
 
@@ -148,8 +149,10 @@ public class MainFrame extends JFrame {
 
         //프레임 보이기
         this.setVisible(true);
+        String initPath = new File(".").getAbsolutePath();
+        System.out.println(initPath);
 
-        ftpManager = new FTPManager(serverDirectoryList, clientDirectoryList, "./", msgField);
+        ftpManager = new FTPManager(serverDirectoryList, clientDirectoryList, initPath, msgField);
 
     }
 
