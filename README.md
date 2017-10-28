@@ -3,12 +3,38 @@
 <br>
 
 ## Feature
+This program is simple ftp client with GUI. The following functions are available.
+<ul>
+<li>Connect server</li>
+<li>Show server directory</li>
+<li>Show client directory</li>
+<li>Move directory</li>
+<li>Download file</li>
+<li>Upload file</li>
+<li>Rename file and directory</li>
+<li>Remove file and directory</li>
+<li>Make a new directory</li>
+</ul>
 
 <br>
 <br>
 
 ## Screenshot
+<img src="https://github.com/pooi/GUIFTPClient/blob/master/screenshot/Screenshot001.png"><br>
+<img src="https://github.com/pooi/GUIFTPClient/blob/master/screenshot/Screenshot002.png"><br>
+<img src="https://github.com/pooi/GUIFTPClient/blob/master/screenshot/Screenshot003.png"><br>
+<img src="https://github.com/pooi/GUIFTPClient/blob/master/screenshot/Screenshot004.png"><br>
+<img src="https://github.com/pooi/GUIFTPClient/blob/master/screenshot/Screenshot005.png"><br>
 
+<br>
+<br>
+
+## Reference
+> Thanks to <a href="https://github.com/frankrui">Frank Rui</a>.
+
+<ul>
+<li><a href="https://github.com/frankrui/Simple-FTP-Client">Simple-FTP-Client</a></li>
+</ul>
 
 <br>
 <br>
