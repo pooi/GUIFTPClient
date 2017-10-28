@@ -103,6 +103,7 @@ public class FTPManager {
             @Override
             public void run() {
                 try {
+                    quitServer();
                     if (socket.isConnected()) { // 소켓이 이미 연결되어 있다면 연결을 끊음
                         socket.close();
                     }
@@ -386,7 +387,7 @@ public class FTPManager {
         try {
             File newPath = new File(this.clientDirPath + "/" + directory);
             this.clientDirPath = newPath.getCanonicalPath();
-            System.out.println(this.clientDirPath + directory + " " + this.clientDirPath);
+//            System.out.println(this.clientDirPath + directory + " " + this.clientDirPath);
         } catch (Exception e) {
             
         }
@@ -590,6 +591,22 @@ public class FTPManager {
                 dataConnection.close();
             } catch (IllegalArgumentException i) {
                 addTextToMsgField("Data transfer connection to " + Ip + " on port " + portNum + " failed to open.");
+            }
+        }catch (Exception e){
+            addTextToMsgField("Supplied command not expected at this time.");
+        }
+
+    }
+
+    public void quitServer(){
+
+        try {
+            if(socket != null && socket.isConnected()) {
+                send("QUIT");
+                handleMultiLineResponse();
+                socket.close();
+                printWriter.close();
+                ftpIn.close();
             }
         }catch (Exception e){
             addTextToMsgField("Supplied command not expected at this time.");
