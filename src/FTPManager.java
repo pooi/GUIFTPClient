@@ -120,7 +120,7 @@ public class FTPManager {
 
                     // Socket connection
                     try {
-                        addTextToMsgField("--> Connect " + host + ":" + portNumber);
+                        addTextToMsgField("--> Connect ftp://" + host + ":" + portNumber);
                         socket = new Socket(host, portNumber);
                     } catch (Exception e) {
                         addTextToMsgField("Failed to connect server!");
@@ -591,6 +591,105 @@ public class FTPManager {
             } catch (IllegalArgumentException i) {
                 addTextToMsgField("Data transfer connection to " + Ip + " on port " + portNum + " failed to open.");
             }
+        }catch (Exception e){
+            addTextToMsgField("Supplied command not expected at this time.");
+        }
+
+    }
+
+    /*
+    * void rename(int index, String replaceName)
+    * int index : 선택된 항목의 index
+    * String replaceName : 수정할 파일 이름
+    * 서버의 폴더 및 파일 이름을 변경하는 함수
+    * return : void
+     */
+    public void rename(int index, String replaceName){
+
+        // 선택된 항목의 정보를 가져옴
+        DirectoryItem item = serverDirectoryItems[index];
+        String pathName = item.getTitle();
+
+        // 잘못된 입력을 받았을 경우(빈 값)
+        if(replaceName == null || "".equals(replaceName)){
+            return;
+        }
+
+        try{
+
+            send("RNFR " + pathName); // 파일의 이름을 바꿀것이라는 명령어 서버에 전송
+            String result = handleMultiLineResponse(); // 서버로부터의 응담을 처리
+
+            if(result.startsWith("350 ")) { // 긍정의 메시지를 받았을 경우
+
+                if(item.getType().equals(DirectoryItem.TYPE_FOLDER)) // 현재 눌린 아이템이 폴더일 경우
+                    send("RNTO " + replaceName); // 이름을 수정하는 명령어 전송
+                else // 현재 눌린 아이템이 파일일 경우
+                    send("RNTO " + replaceName + "." + item.getType()); // 바꿀 이름에 확장자를 붙여 서버에 명령어 전송
+
+                result = handleMultiLineResponse(); // 서버로부터의 결과를 처리
+
+                if(result.startsWith("250 ")) // 성공했다는 메시지를 받았을 경우
+                    getServerDirectoryList(); // 서버 디렉토리 재조회
+            }
+
+        }catch (Exception e){
+            addTextToMsgField("Supplied command not expected at this time.");
+        }
+
+    }
+
+    /*
+    * void delete(int index)
+    * int index : 선택된 항목의 index
+    * 서버의 선택된 파일 또는 폴더를 삭제하는 함수
+    * return : void
+     */
+    public void delete(int index){
+
+        // 선택된 항목의 정보를 가져옴
+        DirectoryItem item = serverDirectoryItems[index];
+        String pathName = item.getTitle();
+
+        try{
+
+            if(item.getType().equals(DirectoryItem.TYPE_FOLDER)){ // 선택된 항목이 폴더일 경우
+                send("RMD " + pathName); // 디렉토리를 삭제하는 명령어 전송
+            }else{ // 선택된 항목이 파일일 경우
+                send("DELE " + pathName); // 파일을 삭제하는 명령어 전송
+            }
+
+            String result = handleMultiLineResponse(); // 서버로부터의 응답을 처리
+            if(result.startsWith("250 ")) // 성공했을 경우 서버 디렉토리 재조회
+                getServerDirectoryList();
+
+
+        }catch (Exception e){
+            addTextToMsgField("Supplied command not expected at this time.");
+        }
+
+    }
+
+    /*
+    * void makeServerDirectory(String name)
+    * String name : 새롭게 생성할 디렉토리 이름
+    * 서버에 현재 디렉토리에 새로운 디렉토리 생성
+    * return : void
+     */
+    public void makeServerDirectory(String name){
+
+        // 잘못된 값이 넘어왔을 경우(빈 값)
+        if(name == null || "".equals(name)){
+            return;
+        }
+
+        try{
+
+            send("MKD " + name); // 새로운 디렉토리를 만드는 명령어 전송
+            String result = handleMultiLineResponse(); // 서버로부터의 응답결과를 가져옴
+            if(result.startsWith("257 ")) // 새로운 디렉토리 생성에 성공했을 경우
+                getServerDirectoryList(); // 서버 디렉토리 재조회
+
         }catch (Exception e){
             addTextToMsgField("Supplied command not expected at this time.");
         }

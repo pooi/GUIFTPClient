@@ -5,6 +5,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
@@ -103,12 +104,57 @@ public class MainFrame extends JFrame {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     JList list = (JList)e.getSource();
-                    if (e.getClickCount() == 2) { // 더블클릭시 진입
+                    int index = list.locationToIndex(e.getPoint());
+                    if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) { // 더블클릭시 진입
 
                         // Double-click detected
-                        int index = list.locationToIndex(e.getPoint());
                         ftpManager.selectServerListItem(index); // 파일 또는 폴더에 맞는 동작을 하도록 함
 
+                    }
+
+                    if (e.getButton() == MouseEvent.BUTTON3) {
+                        // Right-click
+                        JPopupMenu popupMenu = new JPopupMenu(); // 마우스 우클릭시 보여줄 팝업창 객체 생성
+
+                        JMenuItem renameItem = new JMenuItem("Rename");
+                        renameItem.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                String name = JOptionPane.showInputDialog(MainFrame.this, "변경할 이름을 입력해주세요.(파일의 경우 확장자 제외)");
+                                if(name == null || "".equals(name)){ // 빈값이 입력되었을 경우
+                                    JOptionPane.showMessageDialog(MainFrame.this, "잘못된 입력입니다.");
+                                }else{
+                                    ftpManager.rename(index, name); // Rename 실행
+                                }
+                            }
+                        });
+                        JMenuItem deleteItem = new JMenuItem("Delete");
+                        deleteItem.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                ftpManager.delete(index); // 파일 및 폴더 삭제 실행
+                            }
+                        });
+                        JMenuItem makeDirectoryItem = new JMenuItem("Make a Direcotry");
+                        makeDirectoryItem.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                String name = JOptionPane.showInputDialog(MainFrame.this, "디렉토리 이름을 입력해주세요.");
+                                if(name == null || "".equals(name)){ // 빈 값이 입력되었을 경우
+                                    JOptionPane.showMessageDialog(MainFrame.this, "잘못된 입력입니다.");
+                                }else{
+                                    ftpManager.makeServerDirectory(name); // 새로운 디렉토리 생성 실행
+                                }
+                            }
+                        });
+
+                        popupMenu.add(renameItem);
+                        popupMenu.add(deleteItem);
+                        popupMenu.add(makeDirectoryItem);
+
+                        popupMenu.show((Component)e.getSource(), e.getX(), e.getY()); // 클릭한 위치에 팝업창 생성
+
+                        list.setSelectedIndex(index);
                     }
                 }
             });
@@ -139,8 +185,8 @@ public class MainFrame extends JFrame {
                     if (e.getButton() == MouseEvent.BUTTON3) {
                         // Right-click
                         JPopupMenu popupMenu = new JPopupMenu();
-                        popupMenu.add(new JMenuItem("menu1"));
-                        popupMenu.add(new JMenuItem("menu2"));
+                        popupMenu.add(new JMenuItem("Rename"));
+                        popupMenu.add(new JMenuItem("Delete"));
 
                         popupMenu.show((Component)e.getSource(), e.getX(), e.getY());
 
