@@ -387,7 +387,6 @@ public class FTPManager {
         try {
             File newPath = new File(this.clientDirPath + "/" + directory);
             this.clientDirPath = newPath.getCanonicalPath();
-//            System.out.println(this.clientDirPath + directory + " " + this.clientDirPath);
         } catch (Exception e) {
             
         }

@@ -130,11 +130,21 @@ public class MainFrame extends JFrame {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     JList list = (JList)e.getSource();
+                    int index = list.locationToIndex(e.getPoint());
                     if (e.getClickCount() == 2) {
                         // Double-click detected
-                        int index = list.locationToIndex(e.getPoint());
                         ftpManager.selectClientListItem(index);
+                    }
+                    
+                    if (e.getButton() == MouseEvent.BUTTON3) {
+                        // Right-click
+                        JPopupMenu popupMenu = new JPopupMenu();
+                        popupMenu.add(new JMenuItem("menu1"));
+                        popupMenu.add(new JMenuItem("menu2"));
 
+                        popupMenu.show((Component)e.getSource(), e.getX(), e.getY());
+
+                        list.setSelectedIndex(index);
                     }
                 }
             });
