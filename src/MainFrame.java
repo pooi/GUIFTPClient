@@ -185,8 +185,54 @@ public class MainFrame extends JFrame {
                     if (e.getButton() == MouseEvent.BUTTON3) {
                         // Right-click
                         JPopupMenu popupMenu = new JPopupMenu();
-                        popupMenu.add(new JMenuItem("Rename"));
-                        popupMenu.add(new JMenuItem("Delete"));
+
+                        JMenuItem renameItem = new JMenuItem("Rename");
+                        renameItem.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                String name = JOptionPane.showInputDialog(MainFrame.this, "변경할 이름을 입력해주세요.(파일의 경우 확장자 제외)");
+                                if (name == null || "".equals(name)){ // 빈값이 입력되었을 경우
+                                    JOptionPane.showMessageDialog(MainFrame.this, "잘못된 입력입니다.");
+                                } else {
+                                    boolean error = ftpManager.clientRename(index, name); // Rename 실행
+                                    if (!error) {
+                                        JOptionPane.showMessageDialog(MainFrame.this, "파일 이름 변경을 실패하였습니다.");
+                                    }
+                                }
+                            }
+                        });
+
+                        JMenuItem deleteItem = new JMenuItem("Delete");
+                        deleteItem.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                boolean error = ftpManager.clientDelete(index); // 파일 및 폴더 삭제 실행
+
+                                if (!error) {
+                                    JOptionPane.showMessageDialog(MainFrame.this, "파일 삭제를 실패하였습니다.");
+                                }
+                            }
+                        });
+
+                        JMenuItem makeDirectoryItem = new JMenuItem("Make a Direcotry");
+                        makeDirectoryItem.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                String name = JOptionPane.showInputDialog(MainFrame.this, "디렉토리 이름을 입력해주세요.");
+                                if (name == null || "".equals(name)){ // 빈 값이 입력되었을 경우
+                                    JOptionPane.showMessageDialog(MainFrame.this, "잘못된 입력입니다.");
+                                } else {
+                                    boolean error = ftpManager.makeClientDirectory(name); // 새로운 디렉토리 생성 실행
+                                    if (!error) {
+                                        JOptionPane.showMessageDialog(MainFrame.this, "디렉토리 생성을 실패하였습니다.");
+                                    }
+                                }
+                            }
+                        });
+                        
+                        popupMenu.add(renameItem);
+                        popupMenu.add(deleteItem);
+                        popupMenu.add(makeDirectoryItem);
 
                         popupMenu.show((Component)e.getSource(), e.getX(), e.getY());
 

@@ -415,6 +415,70 @@ public class FTPManager {
         }.start();
     }
 
+    public boolean clientRename(int index, String replaceName) {
+        // 선택된 항목의 정보를 가져옴
+        DirectoryItem item = clientDirectoryItems[index];
+        String pathName = item.getTitle();
+        boolean isMoved = false;
+
+        // 잘못된 입력을 받았을 경우(빈 값)
+        if (replaceName == null || "".equals(replaceName)) {
+            return false;
+        }
+
+        try {
+            File originFile = new File(this.clientDirPath + "/" + pathName);
+            String renamePath = this.clientDirPath + "/" + replaceName;
+            if(!item.getType().equals(DirectoryItem.TYPE_FOLDER)) {
+                renamePath += "." + item.getType();
+            }
+            
+            File renameFIle = new File(renamePath);
+            isMoved = originFile.renameTo(renameFIle);
+            getClientDirectoryList();
+        } catch (Exception e) {
+
+        }
+
+        return isMoved;
+    }
+
+    public boolean clientDelete(int index) {
+        // 선택된 항목의 정보를 가져옴
+        DirectoryItem item = clientDirectoryItems[index];
+        String pathName = item.getTitle();
+        boolean isDeleted = false;
+
+        try {
+            File deleteFile = new File(this.clientDirPath + "/" + pathName);
+            isDeleted = deleteFile.delete();
+            getClientDirectoryList();
+        } catch (Exception e) {
+
+        }
+
+        return isDeleted;
+    }
+
+    public boolean makeClientDirectory(String name) {
+        boolean isCreated = false;
+
+        // 잘못된 값이 넘어왔을 경우(빈 값)
+        if(name == null || "".equals(name)){
+            return false;
+        }
+
+        try {
+            File createDir = new File(this.clientDirPath + "/" + name);
+            isCreated = createDir.mkdir();
+            getClientDirectoryList();
+        } catch (Exception e) {
+
+        }
+
+        return isCreated;
+    }
+
     /*
     * void downloadFile(String pathName)
     * String pathName : 다운받을 파일의 이름을 입력받음
@@ -528,7 +592,7 @@ public class FTPManager {
     * 전달받은 파일의 이름을 이용해 해당 파일을 서버에 업로드함
     * return : void
      */
-    private void uploadFile(String fileName){
+    private void uploadFile(String fileName) {
 
         try {
             File file = new File(fileName); // 업로드할 파일을 가져옴
@@ -604,7 +668,7 @@ public class FTPManager {
     * 서버의 폴더 및 파일 이름을 변경하는 함수
     * return : void
      */
-    public void rename(int index, String replaceName){
+    public void rename(int index, String replaceName) {
 
         // 선택된 항목의 정보를 가져옴
         DirectoryItem item = serverDirectoryItems[index];
@@ -645,7 +709,7 @@ public class FTPManager {
     * 서버의 선택된 파일 또는 폴더를 삭제하는 함수
     * return : void
      */
-    public void delete(int index){
+    public void delete(int index) {
 
         // 선택된 항목의 정보를 가져옴
         DirectoryItem item = serverDirectoryItems[index];
@@ -676,7 +740,7 @@ public class FTPManager {
     * 서버에 현재 디렉토리에 새로운 디렉토리 생성
     * return : void
      */
-    public void makeServerDirectory(String name){
+    public void makeServerDirectory(String name) {
 
         // 잘못된 값이 넘어왔을 경우(빈 값)
         if(name == null || "".equals(name)){
