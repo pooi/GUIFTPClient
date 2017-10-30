@@ -177,7 +177,7 @@ public class MainFrame extends JFrame {
                 public void mouseClicked(MouseEvent e) {
                     JList list = (JList)e.getSource();
                     int index = list.locationToIndex(e.getPoint());
-                    if (e.getClickCount() == 2) {
+                    if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
                         // Double-click detected
                         ftpManager.selectClientListItem(index);
                     }
